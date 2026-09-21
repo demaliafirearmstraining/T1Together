@@ -55,3 +55,17 @@ using(exists(select 1 from public.conversation_members mine where mine.conversat
 
 -- Reports can be reviewed by backend/admin tooling; reporters may see their own submissions.
 create policy "reports own read" on public.reports for select to authenticated using(reporter_id=auth.uid());
+
+-- Block-aware read helpers. These replace broad community reads so blocked relationships are respected.
+drop policy if exists "profiles read" on public.profiles;
+create policy "profiles read block aware" on public.profiles for select to authenticated using(
+ id=auth.uid() or not exists(select 1 from public.blocks b where (b.blocker_id=auth.uid() and b.blocked_id=profiles.id) or (b.blocker_id=profiles.id and b.blocked_id=auth.uid()))
+);
+drop policy if exists "posts read" on public.posts;
+create policy "posts read block aware" on public.posts for select to authenticated using(
+ author_id=auth.uid() or not exists(select 1 from public.blocks b where (b.blocker_id=auth.uid() and b.blocked_id=posts.author_id) or (b.blocker_id=posts.author_id and b.blocked_id=auth.uid()))
+);
+drop policy if exists "help read" on public.help_requests;
+create policy "help read block aware" on public.help_requests for select to authenticated using(
+ requester_id=auth.uid() or not exists(select 1 from public.blocks b where (b.blocker_id=auth.uid() and b.blocked_id=help_requests.requester_id) or (b.blocker_id=help_requests.requester_id and b.blocked_id=auth.uid()))
+);
