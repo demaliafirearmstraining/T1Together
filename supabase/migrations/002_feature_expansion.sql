@@ -47,3 +47,11 @@ begin
  return cid;
 end;$$;
 grant execute on function public.start_conversation(uuid) to authenticated;
+
+-- Conversation members can see all members in conversations they belong to.
+drop policy if exists "conversation members own read" on public.conversation_members;
+create policy "conversation members conversation read" on public.conversation_members for select to authenticated
+using(exists(select 1 from public.conversation_members mine where mine.conversation_id=conversation_members.conversation_id and mine.user_id=auth.uid()));
+
+-- Reports can be reviewed by backend/admin tooling; reporters may see their own submissions.
+create policy "reports own read" on public.reports for select to authenticated using(reporter_id=auth.uid());
