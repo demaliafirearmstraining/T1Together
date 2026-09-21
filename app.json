@@ -12,10 +12,20 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.t1together.app"
+      "bundleIdentifier": "com.t1together.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "T1Together uses an approximate version of your location to match you with nearby community help. Your exact location is not shown to other members.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.t1together.app"
+    },
+    "owner": "t1together",
+    "extra": {
+      "eas": {
+        "projectId": "45c7f243-9631-4d13-bffd-aee408dca705"
+      }
     }
   }
 }
