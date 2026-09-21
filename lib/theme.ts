@@ -1,0 +1,1 @@
+export const C={navy:'#062B55',blue:'#0878DB',sky:'#EAF6FF',pale:'#F6FAFE',red:'#FF5A57',green:'#19A974',gray:'#59708A',line:'#E5EEF6',white:'#FFFFFF'};
