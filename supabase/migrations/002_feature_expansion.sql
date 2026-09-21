@@ -69,3 +69,30 @@ drop policy if exists "help read" on public.help_requests;
 create policy "help read block aware" on public.help_requests for select to authenticated using(
  requester_id=auth.uid() or not exists(select 1 from public.blocks b where (b.blocker_id=auth.uid() and b.blocked_id=help_requests.requester_id) or (b.blocker_id=help_requests.requester_id and b.blocked_id=auth.uid()))
 );
+
+-- Prevent blocked users from starting new conversations with each other.
+create or replace function public.start_conversation(other_user uuid)
+returns uuid language plpgsql security definer set search_path=public as $$
+declare cid uuid;
+begin
+ if auth.uid() is null then raise exception 'Authentication required'; end if;
+ if other_user=auth.uid() then raise exception 'Cannot message yourself'; end if;
+ if not exists(select 1 from profiles where id=other_user) then raise exception 'Member not found'; end if;
+ if exists(select 1 from blocks where (blocker_id=auth.uid() and blocked_id=other_user) or (blocker_id=other_user and blocked_id=auth.uid())) then
+  raise exception 'Messaging unavailable';
+ end if;
+ select cm1.conversation_id into cid
+ from conversation_members cm1 join conversation_members cm2 on cm1.conversation_id=cm2.conversation_id
+ where cm1.user_id=auth.uid() and cm2.user_id=other_user limit 1;
+ if cid is null then
+  insert into conversations default values returning id into cid;
+  insert into conversation_members(conversation_id,user_id) values(cid,auth.uid()),(cid,other_user);
+ end if;
+ return cid;
+end;$$;
+
+-- Only the request owner and responder can read Beacon responses.
+drop policy if exists "responses read" on public.beacon_responses;
+create policy "responses participant read" on public.beacon_responses for select to authenticated using(
+ responder_id=auth.uid() or exists(select 1 from public.help_requests h where h.id=beacon_responses.request_id and h.requester_id=auth.uid())
+);
