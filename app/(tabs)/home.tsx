@@ -19,7 +19,7 @@ export default function Home(){
  async function refresh(){setRefreshing(true);await load();setRefreshing(false)}
  const first=profile?.display_name?.split(' ')[0]||'there';
  return <SafeAreaView style={s.safe}><ScrollView style={s.scroll} contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh}/>}>
-  <View style={s.top}><View><Text style={s.eyebrow}>T1TOGETHER</Text><Text style={s.h}>Hi, {first} 💙</Text><Text style={s.location}>{profile?.city?[profile.city,profile.region].filter(Boolean).join(', '):'Your T1D community'}</Text></View><View style={s.avatar}><Ionicons name="person" size={23} color={C.blue}/></View></View>
+  <View style={s.top}><View><Text style={s.eyebrow}>T1TOGETHER</Text><Text style={s.h}>Hi, {first} 💙</Text><Text style={s.location}>{profile?.city?[profile.city,profile.region].filter(Boolean).join(', '):'Your T1D community'}</Text></View><Pressable style={s.avatar} onPress={()=>router.push('/settings')}><Ionicons name="person" size={23} color={C.blue}/></Pressable></View>
   <Pressable style={s.composer} onPress={()=>router.push('/create-post')}><View style={s.composerIcon}><Ionicons name="create-outline" size={21} color={C.blue}/></View><Text style={s.composerText}>What's happening?</Text><Ionicons name="chevron-forward" size={20} color={C.gray}/></Pressable>
   <Text style={s.section}>Quick help</Text><View style={s.actions}>
    <Pressable style={[s.action,s.beacon]} onPress={()=>router.push('/(tabs)/help')}><Ionicons name="radio" size={25} color={C.red}/><Text style={s.actionTitle}>T1 Beacon</Text><Text style={s.actionText}>Ask nearby helpers</Text></Pressable>
