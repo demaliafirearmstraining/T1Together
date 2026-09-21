@@ -1,1 +1,21 @@
-{"expo":{"name":"T1Together","slug":"t1together","scheme":"t1together","version":"1.0.0","orientation":"portrait","userInterfaceStyle":"light","plugins":["expo-router"],"ios":{"supportsTablet":true,"bundleIdentifier":"com.t1together.app"},"android":{"package":"com.t1together.app"}}}
+{
+  "expo": {
+    "name": "T1Together",
+    "slug": "t1together",
+    "scheme": "t1together",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      "expo-notifications"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.t1together.app"
+    },
+    "android": {
+      "package": "com.t1together.app"
+    }
+  }
+}
