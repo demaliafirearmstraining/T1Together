@@ -40,3 +40,35 @@ begin
  return cid;
 end;$$;
 grant execute on function public.start_conversation(uuid) to authenticated;
+
+-- Stable membership helpers avoid recursive RLS checks.
+create or replace function public.is_conversation_member(cid uuid, uid uuid)
+returns boolean language sql stable security definer set search_path=public as $$
+ select exists(select 1 from conversation_members where conversation_id=cid and user_id=uid);
+$$;
+revoke all on function public.is_conversation_member(uuid,uuid) from public;
+grant execute on function public.is_conversation_member(uuid,uuid) to authenticated;
+
+drop policy if exists "conversations member read" on public.conversations;
+create policy "conversations member read" on public.conversations for select to authenticated
+using(public.is_conversation_member(id,auth.uid()));
+
+drop policy if exists "conversation members conversation read" on public.conversation_members;
+create policy "conversation members conversation read" on public.conversation_members for select to authenticated
+using(public.is_conversation_member(conversation_id,auth.uid()));
+
+drop policy if exists "messages member read" on public.messages;
+create policy "messages member read" on public.messages for select to authenticated
+using(public.is_conversation_member(conversation_id,auth.uid()));
+
+drop policy if exists "messages member insert" on public.messages;
+create policy "messages member insert" on public.messages for insert to authenticated
+with check(sender_id=auth.uid() and public.is_conversation_member(conversation_id,auth.uid()));
+
+-- Hide comments authored by blocked members.
+drop policy if exists "comments read" on public.post_comments;
+create policy "comments read block aware" on public.post_comments for select to authenticated using(
+ author_id=auth.uid() or not exists(select 1 from public.blocks b where
+ (b.blocker_id=auth.uid() and b.blocked_id=post_comments.author_id) or
+ (b.blocker_id=post_comments.author_id and b.blocked_id=auth.uid()))
+);
