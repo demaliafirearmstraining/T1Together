@@ -1,0 +1,6 @@
+import {supabase} from '../lib/supabase';
+const user=async()=>{const {data}=await supabase.auth.getUser();if(!data.user)throw new Error('Sign in required');return data.user};
+export async function getFeed(){const {data,error}=await supabase.from('posts').select('*,profiles(display_name,role)').order('created_at',{ascending:false}).limit(50);if(error)throw error;return data??[]}
+export async function createPost(body:string,category='General'){const u=await user();const {data,error}=await supabase.from('posts').insert({author_id:u.id,body,category}).select().single();if(error)throw error;return data}
+export async function createBeacon(v:{kind:string,item:string,details?:string,radius_miles:number,urgency:string}){const u=await user();const {data,error}=await supabase.from('help_requests').insert({...v,requester_id:u.id,status:'open'}).select().single();if(error)throw error;return data}
+export async function sendMessage(conversation_id:string,body:string){const u=await user();const {data,error}=await supabase.from('messages').insert({conversation_id,sender_id:u.id,body}).select().single();if(error)throw error;return data}
