@@ -18,8 +18,8 @@ Supabase/PostgreSQL with Row Level Security. See `supabase/migrations/001_initia
 
 ## Local setup
 1. Copy `.env.example` to `.env`
-2. Add your Supabase project URL and anon key
+2. Set `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the project's Supabase publishable key.
 3. `npm install`
 4. `npx expo start`
 
-Never commit the Supabase service-role key or precise user home locations.
+The Supabase project URL is already represented in `.env.example`. Do not commit the real `.env`, service-role/secret keys, database passwords, or precise user home locations.
