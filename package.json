@@ -14,9 +14,6 @@
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@supabase/supabase-js": "^2.57.0",
     "expo": "~57.0.0",
-    "expo-constants": "~57.0.19",
-    "expo-font": "~57.0.9",
-    "expo-linking": "~57.0.12",
     "expo-location": "~57.0.19",
     "expo-notifications": "~57.0.20",
     "expo-router": "~57.0.22",
@@ -24,7 +21,6 @@
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.16.0",
     "react-native-url-polyfill": "^2.0.0"
   },
   "devDependencies": {
