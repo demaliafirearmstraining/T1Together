@@ -8,7 +8,7 @@ export default function TabsLayout(){
  useEffect(()=>{if(!session)return;refreshUnread();const timer=setInterval(refreshUnread,3000);return()=>clearInterval(timer)},[session,refreshUnread]);
  if(!session)return null;
  const icons:any={home:'home',nearby:'location',community:'people',help:'help-buoy',messages:'chatbubble'};
- return <Tabs screenListeners={{state:()=>refreshUnread()}} screenOptions={({route})=>({headerShown:false,tabBarActiveTintColor:C.blue,tabBarInactiveTintColor:C.gray,tabBarStyle:{height:76,paddingBottom:10,paddingTop:8},tabBarIcon:({color,size})=><Ionicons name={icons[route.name]} size={size} color={color}/>})}>
+ return <Tabs screenListeners={{state:()=>refreshUnread()}} screenOptions={({route})=>({headerShown:false,tabBarActiveTintColor:C.blue,tabBarInactiveTintColor:C.gray,tabBarStyle:{height:78,paddingBottom:10,paddingTop:8,borderTopColor:C.line},tabBarLabelStyle:{fontSize:11,fontWeight:'800'},tabBarItemStyle:{paddingTop:2},tabBarIcon:({color,size})=><Ionicons name={icons[route.name]} size={size} color={color}/>})}>
   <Tabs.Screen name="home" options={{title:'Home'}}/>
   <Tabs.Screen name="nearby" options={{title:'Nearby'}}/>
   <Tabs.Screen name="community" options={{title:'Community'}}/>
