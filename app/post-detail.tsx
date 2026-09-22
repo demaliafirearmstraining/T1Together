@@ -1,5 +1,5 @@
 import React,{useCallback,useMemo,useState}from'react';
-import{SafeAreaView,ScrollView,View,Text,TextInput,Pressable,StyleSheet,Alert,KeyboardAvoidingView,Platform,Image}from'react-native';
+import{SafeAreaView,ScrollView,View,Text,TextInput,Pressable,StyleSheet,Alert,KeyboardAvoidingView,Platform,Image,Keyboard}from'react-native';
 import{useFocusEffect,useLocalSearchParams,router}from'expo-router';
 import{Ionicons}from'@expo/vector-icons';
 import{supabase}from'../lib/supabase';
@@ -64,7 +64,7 @@ export default function PostDetail(){
  if(loading)return <SafeAreaView style={s.safe}><Text style={s.loading}>Loading…</Text></SafeAreaView>;
  if(!post)return <SafeAreaView style={s.safe}><View style={s.page}><Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Community</Text></Pressable><View style={s.comment}><Text style={s.commentName}>Post unavailable</Text><Text style={s.commentBody}>{error||'This post may have been deleted or is no longer visible.'}</Text><Pressable onPress={()=>load()} style={s.send}><Ionicons name="refresh" size={19} color={C.white}/></Pressable></View></View></SafeAreaView>;
 
- return <SafeAreaView style={s.safe}><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':undefined}><ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
+ return <SafeAreaView style={s.safe}><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':'height'} keyboardVerticalOffset={Platform.OS==='ios'?8:0}><ScrollView contentContainerStyle={s.page} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS==='ios'?'interactive':'on-drag'} automaticallyAdjustKeyboardInsets={Platform.OS==='ios'}>
   <Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Community</Text></Pressable>
   <View style={s.post}>
    <View style={s.postHeader}><Pressable onPress={()=>openProfile(post.author_id)} style={s.authorRow}>{post.profiles?.avatar_url?<Image source={{uri:post.profiles.avatar_url}} style={s.avatar}/>:<View style={s.avatarFallback}><Text style={s.initial}>{(post.profiles?.display_name||'M').charAt(0)}</Text></View>}<View><Text style={s.author}>{post.profiles?.display_name||'Member'}</Text><Text style={s.time}>{new Date(post.created_at).toLocaleString()}</Text></View></Pressable><Pressable onPress={()=>router.push({pathname:'/report',params:{type:'post',id:post.id}})}><Ionicons name="ellipsis-horizontal" size={22} color={C.gray}/></Pressable></View>
@@ -75,7 +75,7 @@ export default function PostDetail(){
   {roots.map(x=><View key={x.id}>{renderComment(x)}{replies(x.id).map(r=>renderComment(r,true))}</View>)}
   {comments.length===0&&<Text style={s.empty}>No comments yet. Be the first to join the conversation.</Text>}
   {replyTo&&<View style={s.replying}><View style={{flex:1}}><Text style={s.replyingLabel}>Replying to {replyTo.profiles?.display_name||'Member'}</Text><Text numberOfLines={1} style={s.replyingPreview}>{replyTo.body}</Text></View><Pressable onPress={()=>setReplyTo(null)}><Ionicons name="close-circle" size={22} color={C.gray}/></Pressable></View>}
-  <View style={s.compose}><TextInput style={s.input} value={body} onChangeText={setBody} placeholder={replyTo?'Write a reply…':'Add a supportive comment…'} multiline/><Pressable style={[s.send,commenting&&{opacity:.5}]} onPress={comment} disabled={commenting||!body.trim()}><Ionicons name="send" size={19} color={C.white}/></Pressable></View>
+  <View style={s.compose}><TextInput style={s.input} value={body} onChangeText={setBody} placeholder={replyTo?'Write a reply…':'Add a supportive comment…'} multiline onFocus={()=>setTimeout(()=>Keyboard.scheduleLayoutAnimation?.({duration:250,easing:'keyboard'} as any),50)}/><Pressable style={[s.send,commenting&&{opacity:.5}]} onPress={comment} disabled={commenting||!body.trim()}><Ionicons name="send" size={19} color={C.white}/></Pressable></View>
  </ScrollView></KeyboardAvoidingView></SafeAreaView>
 }
 
