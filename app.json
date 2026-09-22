@@ -12,21 +12,31 @@
       "expo-notifications"
     ],
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.t1together.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "T1Together uses an approximate version of your location to match you with nearby community help. Your exact location is not shown to other members.",
-        "ITSAppUsesNonExemptEncryption": false
-      }
+        "NSLocationWhenInUseUsageDescription": "T1Together uses your location while you use the app to create a reduced-precision location for nearby community matching. Your exact GPS location is not shown to other members.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "T1Together uses the camera only when you choose to take a profile or Community photo.",
+        "NSPhotoLibraryUsageDescription": "T1Together uses your photo library only when you choose a profile or Community photo.",
+        "NSPhotoLibraryAddUsageDescription": "T1Together does not need to save photos to your library."
+      },
+      "buildNumber": "1"
     },
     "android": {
-      "package": "com.t1together.app"
+      "package": "com.t1together.app",
+      "versionCode": 1,
+      "softwareKeyboardLayoutMode": "resize"
     },
     "owner": "t1together",
     "extra": {
       "eas": {
         "projectId": "45c7f243-9631-4d13-bffd-aee408dca705"
       }
+    },
+    "description": "Life with Type 1, together. A community for people living with Type 1 diabetes, parents, caregivers, and supporters.",
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
