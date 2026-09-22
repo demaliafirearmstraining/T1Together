@@ -1,5 +1,5 @@
 import React,{useEffect,useState}from'react';import{Redirect}from'expo-router';import{ActivityIndicator,View}from'react-native';import{useAuth}from'../lib/AuthContext';import{supabase}from'../lib/supabase';import{C}from'../lib/theme';
-export default function Index(){const{session,loading}=useAuth();const[checking,setChecking]=useState(true);const[hasProfile,setHasProfile]=useState(false);
-useEffect(()=>{let active=true;if(loading)return;if(!session){setHasProfile(false);setChecking(false);return}setChecking(true);supabase.from('profiles').select('id').eq('id',session.user.id).maybeSingle().then(({data})=>{if(active){setHasProfile(!!data?.id);setChecking(false)}});return()=>{active=false}},[session?.user?.id,loading]);
+export default function Index(){const{session,loading}=useAuth();const[checking,setChecking]=useState(true);const[hasProfile,setHasProfile]=useState(false);const[onboardingComplete,setOnboardingComplete]=useState(false);
+useEffect(()=>{let active=true;if(loading)return;if(!session){setHasProfile(false);setChecking(false);return}setChecking(true);supabase.from('profiles').select('id,onboarding_completed').eq('id',session.user.id).maybeSingle().then(({data})=>{if(active){setHasProfile(!!data?.id);setOnboardingComplete(data?.onboarding_completed===true);setChecking(false)}});return()=>{active=false}},[session?.user?.id,loading]);
 if(loading||checking)return <View style={{flex:1,alignItems:'center',justifyContent:'center'}}><ActivityIndicator color={C.blue}/></View>;
-return <Redirect href={!session?"/welcome":hasProfile?"/(tabs)/home":"/onboarding"}/>}
+return <Redirect href={!session?"/welcome":hasProfile&&onboardingComplete?"/(tabs)/home":"/onboarding"}/>}
