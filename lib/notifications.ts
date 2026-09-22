@@ -30,7 +30,7 @@ export function notificationRoute(data:any){
  if((data?.kind==='help'||data?.kind==='beacon')&&data?.entity_id)return {pathname:'/help-detail',params:{id:String(data.entity_id)}} as any;
  if((data?.kind==='supply'||data?.kind==='supply_match')&&data?.entity_id)return {pathname:'/supply-detail',params:{id:String(data.entity_id)}} as any;
  if(data?.kind==='message'&&data?.conversation_id)return {pathname:'/chat',params:{id:String(data.conversation_id)}} as any;
- if((data?.kind==='community_comment'||data?.kind==='community_support')&&data?.entity_id)return {pathname:'/post-detail',params:{id:String(data.entity_id)}} as any;
+ if((data?.kind==='community_comment'||data?.kind==='community_reply'||data?.kind==='community_support')&&data?.entity_id)return {pathname:'/post-detail',params:{id:String(data.entity_id)}} as any;
  if(data?.route)return data.route as any;
  return '/notifications' as any;
 }
