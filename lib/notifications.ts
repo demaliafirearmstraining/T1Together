@@ -6,7 +6,12 @@ import {supabase} from './supabase';
 Notifications.setNotificationHandler({handleNotification:async()=>({shouldShowBanner:true,shouldShowList:true,shouldPlaySound:true,shouldSetBadge:true})});
 
 export async function registerPush(userId:string){
- if(Platform.OS==='android')await Notifications.setNotificationChannelAsync('default',{name:'T1Together',importance:Notifications.AndroidImportance.HIGH,vibrationPattern:[0,250,150,250]});
+ if(Platform.OS==='android'){
+  await Notifications.setNotificationChannelAsync('default',{name:'T1Together',description:'General T1Together notifications',importance:Notifications.AndroidImportance.DEFAULT,vibrationPattern:[0,180]});
+  await Notifications.setNotificationChannelAsync('messages',{name:'Messages',description:'Private T1Together messages',importance:Notifications.AndroidImportance.HIGH,vibrationPattern:[0,120,80,120]});
+  await Notifications.setNotificationChannelAsync('community',{name:'Community & Help',description:'Community, Help and Supply Locker updates',importance:Notifications.AndroidImportance.HIGH,vibrationPattern:[0,180,100,180]});
+  await Notifications.setNotificationChannelAsync('beacon',{name:'T1 Beacon',description:'Time-sensitive T1 Beacon alerts',importance:Notifications.AndroidImportance.MAX,vibrationPattern:[0,300,120,300,120,300]});
+ }
  const current=await Notifications.getPermissionsAsync();
  let status=current.status;
  if(status!=='granted')status=(await Notifications.requestPermissionsAsync()).status;
