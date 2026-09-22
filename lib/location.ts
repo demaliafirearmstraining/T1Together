@@ -1,7 +1,9 @@
 import * as Location from'expo-location';import{supabase}from'./supabase';
 export const LOCATION_STALE_HOURS=24;
 export async function getApproximateLocationStatus(){
- const{data,error}=await supabase.from('approximate_locations').select('updated_at').maybeSingle();
+ const{data:{user}}=await supabase.auth.getUser();
+ if(!user)return {updatedAt:null,error:'Not signed in'};
+ const{data,error}=await supabase.from('approximate_locations').select('updated_at').eq('user_id',user.id).maybeSingle();
  return {updatedAt:data?.updated_at||null,error:error?.message};
 }
 export async function updateApproximateLocation(options:{requestPermission?:boolean}={}){
