@@ -19,9 +19,18 @@ export async function registerPush(userId:string){
   return {ok:!error,reason:error?.message,token};
  }catch(e:any){return {ok:false,reason:e?.message||'token'} }
 }
+
 export function notificationRoute(data:any){
  if(data?.kind==='help_response'&&data?.entity_id)return {pathname:'/help-responses',params:{id:String(data.entity_id)}} as any;
  if((data?.kind==='help'||data?.kind==='beacon')&&data?.entity_id)return {pathname:'/help-detail',params:{id:String(data.entity_id)}} as any;
+ if((data?.kind==='supply'||data?.kind==='supply_match')&&data?.entity_id)return {pathname:'/supply-detail',params:{id:String(data.entity_id)}} as any;
  if(data?.kind==='message'&&data?.conversation_id)return {pathname:'/chat',params:{id:String(data.conversation_id)}} as any;
+ if(data?.route)return data.route as any;
  return '/notifications' as any;
+}
+
+export async function syncNotificationBadge(){
+ const{count,error}=await supabase.from('notifications').select('id',{count:'exact',head:true}).is('read_at',null);
+ if(!error)await Notifications.setBadgeCountAsync(count||0).catch(()=>{});
+ return count||0;
 }
