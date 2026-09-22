@@ -47,7 +47,19 @@ Deno.serve(async(req)=>{
     continue;
    }
 
-   const messages=tokens.map(t=>({to:t.expo_push_token,sound:'default',title:job.title,body:job.body,data:{kind:job.kind,entity_id:job.entity_id,conversation_id:job.conversation_id,route:job.route},priority:job.kind==='beacon'?'high':'default'}));
+   const presentation=(kind:string,title:string,body:string)=>{
+    const clean=(v:any)=>String(v||'').replace(/\\s+/g,' ').trim();
+    const baseTitle=clean(title),baseBody=clean(body);
+    if(kind==='message')return {title:baseTitle||'New message',body:baseBody||'Someone sent you a message.',categoryId:'message',threadId:'messages'};
+    if(kind==='beacon')return {title:'T1 Beacon · Help nearby',body:baseBody||'A nearby T1Together member needs time-sensitive help.',categoryId:'beacon',threadId:'help'};
+    if(kind==='help_response')return {title:'Someone can help',body:baseBody||'A T1Together member responded to your Help request.',categoryId:'help_response',threadId:'help'};
+    if(kind==='help')return {title:baseTitle||'Help requested nearby',body:baseBody||'A nearby member posted a new Help request.',categoryId:'help',threadId:'help'};
+    if(kind==='supply_match')return {title:'Supply Locker match',body:baseBody||'There may be a nearby match for your Supply Locker post.',categoryId:'supply',threadId:'supply'};
+    if(kind==='supply')return {title:baseTitle||'Supply Locker update',body:baseBody||'There is a new Supply Locker update nearby.',categoryId:'supply',threadId:'supply'};
+    return {title:baseTitle||'T1Together',body:baseBody,categoryId:'default',threadId:'t1together'};
+   };
+   const copy=presentation(job.kind,job.title,job.body);
+   const messages=tokens.map(t=>({to:t.expo_push_token,sound:'default',title:copy.title,body:copy.body,data:{kind:job.kind,entity_id:job.entity_id,conversation_id:job.conversation_id,route:job.route},priority:job.kind==='beacon'?'high':'default',categoryId:copy.categoryId,threadId:copy.threadId,subtitle:job.kind==='beacon'?'T1Together community':undefined}));
    const response=await fetch('https://exp.host/--/api/v2/push/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(messages)});
    const payload=await response.json().catch(()=>null);
    if(!response.ok)throw new Error(`Expo push HTTP ${response.status}`);
