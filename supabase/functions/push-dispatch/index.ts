@@ -6,7 +6,7 @@ function preferenceColumn(kind:string){
  if(kind==='message')return 'notify_messages';
  if(kind==='beacon')return 'notify_beacon';
  if(kind==='help_response')return 'notify_help_responses';
- if(kind==='community_comment')return 'notify_community_comments';
+ if(kind==='community_comment'||kind==='community_reply')return 'notify_community_comments';
  if(kind==='community_support')return 'notify_community_support';
  if(kind==='help'||kind==='supply'||kind==='supply_match')return 'notify_nearby_help';
  return null;
@@ -54,6 +54,7 @@ Deno.serve(async(req)=>{
     const baseTitle=clean(title),baseBody=clean(body);
     if(kind==='message')return {title:baseTitle||'New message',body:baseBody||'Someone sent you a message.',categoryId:'message',threadId:'messages'};
     if(kind==='community_comment')return {title:'New comment on your post',body:baseBody||'Someone commented on your post.',categoryId:'community',threadId:'community'};
+    if(kind==='community_reply')return {title:baseTitle||'New reply to your comment',body:baseBody||'Someone replied to your comment.',categoryId:'community',threadId:'community'};
     if(kind==='community_support')return {title:'Someone supported your post',body:baseBody||'Someone supported your post.',categoryId:'community',threadId:'community'};
     if(kind==='beacon')return {title:'T1 Beacon · Help nearby',body:baseBody||'A nearby T1Together member needs time-sensitive help.',categoryId:'beacon',threadId:'help'};
     if(kind==='help_response')return {title:'Someone can help',body:baseBody||'A T1Together member responded to your Help request.',categoryId:'help_response',threadId:'help'};
