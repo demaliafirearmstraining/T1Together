@@ -3,7 +3,9 @@ alter table public.supply_posts add column if not exists expires_at timestamptz;
 update public.supply_posts set expires_at=created_at+interval '14 days' where expires_at is null;
 alter table public.supply_posts alter column expires_at set default (now()+interval '14 days');
 
-drop function if exists public.nearby_supply_posts(integer);\n\ncreate function public.nearby_supply_posts(max_miles integer default 25)
+drop function if exists public.nearby_supply_posts(integer);
+
+create function public.nearby_supply_posts(max_miles integer default 25)
 returns table(id uuid,owner_id uuid,post_type text,category text,item_name text,device_family text,quantity integer,details text,radius_miles integer,created_at timestamptz,expires_at timestamptz,display_name text,city text,region text,avatar_url text,distance_band text)
 language sql security definer set search_path=public as $$
 with mine as(select latitude_bucket lat,longitude_bucket lng from approximate_locations where user_id=auth.uid() limit 1),
