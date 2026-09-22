@@ -13,7 +13,7 @@ export default function SupplyLocker(){
   const nearby=await supabase.rpc('nearby_supply_posts',{max_miles:25});
   const mine=await supabase.from('supply_posts').select('id,owner_id,post_type,category,item_name,device_family,quantity,details,radius_miles,created_at,expires_at,profiles!supply_posts_owner_id_fkey(display_name,city,region,avatar_url)').eq('owner_id',session.user.id).eq('status','open').order('created_at',{ascending:false});
   const own=(mine.data||[]).map((x:any)=>({...x,display_name:x.profiles?.display_name,city:x.profiles?.city,region:x.profiles?.region,avatar_url:x.profiles?.avatar_url,distance_band:'Your post'}));
-  setItems([...own,...(nearby.data||[])]);
+  const merged=[...own,...(nearby.data||[])];const unique=Array.from(new Map(merged.map((x:any)=>[x.id,x])).values());unique.sort((a:any,b:any)=>new Date(b.created_at||0).getTime()-new Date(a.created_at||0).getTime());setItems(unique);
  },[session]);
  useFocusEffect(useCallback(()=>{load()},[load]));
  async function refresh(){setRefreshing(true);await load();setRefreshing(false)}
