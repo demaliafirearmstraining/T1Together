@@ -5,6 +5,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
+    "dev": "set APP_VARIANT=development&& expo start --dev-client",
+    "dev:clear": "set APP_VARIANT=development&& expo start --dev-client --clear",
     "ios": "expo start --ios",
     "android": "expo start --android",
     "web": "expo start --web"
