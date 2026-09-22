@@ -18,7 +18,8 @@ export default function SupplyLocker(){
  useFocusEffect(useCallback(()=>{load()},[load]));
  async function refresh(){setRefreshing(true);await load();setRefreshing(false)}
  async function message(id:string){const{data,error}=await supabase.rpc('start_conversation',{other_user:id});if(error)return Alert.alert('Could not start message',error.message);if(data)router.push({pathname:'/chat',params:{id:data}})}
- async function renew(id:string){const{error}=await supabase.rpc('renew_supply_post',{post_id:id});if(error)return Alert.alert('Could not renew post',error.message);load()}\n async function close(id:string){const{error}=await supabase.from('supply_posts').update({status:'closed'}).eq('id',id);if(error)return Alert.alert('Could not close post',error.message);load()}
+ async function renew(id:string){const{error}=await supabase.rpc('renew_supply_post',{post_id:id});if(error)return Alert.alert('Could not renew post',error.message);load()}
+ async function close(id:string){const{error}=await supabase.from('supply_posts').update({status:'closed'}).eq('id',id);if(error)return Alert.alert('Could not close post',error.message);load()}
  const categories=['All',...Array.from(new Set(items.map(x=>x.category).filter(Boolean)))];const shown=items.filter(x=>(filter==='all'||filter==='mine'&&x.owner_id===session?.user.id||x.post_type===filter)&&(category==='All'||x.category===category)&&(!query.trim()||[x.item_name,x.device_family,x.details,x.category].filter(Boolean).join(' ').toLowerCase().includes(query.trim().toLowerCase())));
  return <SafeAreaView style={s.safe}><ScrollView contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh}/>}>
   <Pressable onPress={()=>router.back()}><Text style={s.back}>‹ Back</Text></Pressable>
