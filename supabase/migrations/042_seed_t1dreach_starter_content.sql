@@ -2,7 +2,7 @@
 -- Requires one existing profile to be designated as the T1DReach Team owner.
 --
 -- BEFORE RUNNING:
--- Replace YOUR_EMAIL_HERE with the email address of the account that should own
+-- Replace t1demalia@gmail.com with the email address of the account that should own
 -- official T1DReach starter content. No auth users or profiles are created here.
 --
 -- Safe to re-run: existing seeded rows are removed by their deterministic IDs.
@@ -13,11 +13,11 @@ declare
 begin
   select id into team_id
   from auth.users
-  where lower(email)=lower('YOUR_EMAIL_HERE')
+  where lower(email)=lower('t1demalia@gmail.com')
   limit 1;
 
   if team_id is null then
-    raise exception 'No auth user found for YOUR_EMAIL_HERE. Replace the placeholder with an existing T1DReach account email.';
+    raise exception 'No auth user found for t1demalia@gmail.com. Replace the placeholder with an existing T1DReach account email.';
   end if;
 
   -- Present this account transparently as the official app/community identity.
