@@ -12,9 +12,9 @@ export default function Account(){
  async function logout(){if(busy)return;setBusy(true);try{await signOut();router.replace('/welcome')}finally{setBusy(false)}}
  function deleteAccount(){
   if(!session||busy)return;
-  Alert.alert('Delete T1Together Account?','This permanently deletes your profile, posts, comments, Help and Supply Locker activity, messages tied to your account, location data, push tokens and uploaded photos. This cannot be undone.',[
+  Alert.alert('Delete T1DReach Account?','This permanently deletes your profile, posts, comments, Help and Supply Locker activity, messages tied to your account, location data, push tokens and uploaded photos. This cannot be undone.',[
    {text:'Cancel',style:'cancel'},
-   {text:'Continue',style:'destructive',onPress:()=>Alert.alert('Are you absolutely sure?','Your T1Together account and app data will be permanently deleted.',[
+   {text:'Continue',style:'destructive',onPress:()=>Alert.alert('Are you absolutely sure?','Your T1DReach account and app data will be permanently deleted.',[
     {text:'Cancel',style:'cancel'},
     {text:'Delete My Account',style:'destructive',onPress:async()=>{setBusy(true);const{error}=await supabase.functions.invoke('delete-account',{body:{confirm:true}});if(error){setBusy(false);return Alert.alert('Could not delete account',error.message)}await signOut();router.replace('/welcome')}}
    ])}
@@ -22,10 +22,10 @@ export default function Account(){
  }
  return <SafeAreaView style={s.safe}><View style={s.page}>
   <View style={s.header}><Pressable onPress={()=>router.back()} style={s.back}><Ionicons name="chevron-back" size={24} color={C.blue}/><Text style={s.backText}>Back</Text></Pressable><Text style={s.title}>Account</Text><View style={{width:72}}/></View>
-  <View style={s.card}><View style={s.icon}><Ionicons name="person-circle-outline" size={25} color={C.blue}/></View><View style={{flex:1}}><Text style={s.cardTitle}>Signed in as</Text><Text style={s.email}>{session?.user?.email||'T1Together member'}</Text></View></View>
+  <View style={s.card}><View style={s.icon}><Ionicons name="person-circle-outline" size={25} color={C.blue}/></View><View style={{flex:1}}><Text style={s.cardTitle}>Signed in as</Text><Text style={s.email}>{session?.user?.email||'T1DReach member'}</Text></View></View>
   <Pressable style={s.settings} onPress={()=>router.push('/settings')}><Ionicons name="settings-outline" size={21} color={C.blue}/><View style={{flex:1}}><Text style={s.settingsTitle}>Profile & Settings</Text><Text style={s.settingsText}>Profile, experience, privacy, alerts and blocked members</Text></View><Ionicons name="chevron-forward" size={19} color={C.gray}/></Pressable>
   <Pressable style={[s.signOut,busy&&s.disabled]} onPress={logout} disabled={busy}><Ionicons name="log-out-outline" size={21} color={C.blue}/><Text style={s.signOutText}>Sign Out</Text>{busy&&<ActivityIndicator size="small" color={C.blue}/>}</Pressable>
-  <View style={s.danger}><Text style={s.dangerTitle}>Delete Account</Text><Text style={s.dangerText}>Permanently delete your T1Together account and associated app data. This cannot be undone.</Text><Pressable style={[s.delete,busy&&s.disabled]} onPress={deleteAccount} disabled={busy}><Ionicons name="trash-outline" size={20} color={C.red}/><Text style={s.deleteText}>Delete My Account</Text></Pressable></View>
+  <View style={s.danger}><Text style={s.dangerTitle}>Delete Account</Text><Text style={s.dangerText}>Permanently delete your T1DReach account and associated app data. This cannot be undone.</Text><Pressable style={[s.delete,busy&&s.disabled]} onPress={deleteAccount} disabled={busy}><Ionicons name="trash-outline" size={20} color={C.red}/><Text style={s.deleteText}>Delete My Account</Text></Pressable></View>
   <Pressable style={s.legal} onPress={()=>router.push('/legal-support')}><Ionicons name="shield-checkmark-outline" size={20} color={C.blue}/><Text style={s.legalText}>Legal, Safety & Support</Text><Ionicons name="chevron-forward" size={18} color={C.gray}/></Pressable>
  </View></SafeAreaView>
 }
