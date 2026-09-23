@@ -1,6 +1,6 @@
-# T1Together
+# T1DReach
 
-Life with Type 1, together.
+Your T1D community within reach.
 
 React Native / Expo community app for people living with Type 1 diabetes and their caregivers.
 
