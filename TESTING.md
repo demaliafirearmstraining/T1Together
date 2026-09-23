@@ -1,4 +1,4 @@
-# T1Together V1 test pass
+# T1DReach V1 test pass
 
 Run `supabase/migrations/002_feature_expansion.sql` in the Supabase SQL Editor before this test pass.
 
