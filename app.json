@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "T1Together",
+    "name": "T1DReach",
     "slug": "t1together",
     "scheme": "t1together",
     "version": "1.0.0",
@@ -15,10 +15,10 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.t1together.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "T1Together uses your location while you use the app to create a reduced-precision location for nearby community matching. Your exact GPS location is not shown to other members.",
+        "NSLocationWhenInUseUsageDescription": "T1DReach uses your location while you use the app to create a reduced-precision location for nearby community matching. Your exact GPS location is not shown to other members.",
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "T1Together uses the camera only when you choose to take a profile or Community photo.",
-        "NSPhotoLibraryUsageDescription": "T1Together uses your photo library only when you choose a profile or Community photo.",
+        "NSCameraUsageDescription": "T1DReach uses the camera only when you choose to take a profile or Community photo.",
+        "NSPhotoLibraryUsageDescription": "T1DReach uses your photo library only when you choose a profile or Community photo.",
         "NSPhotoLibraryAddUsageDescription": "T1Together does not need to save photos to your library."
       },
       "buildNumber": "1"
@@ -34,7 +34,7 @@
         "projectId": "45c7f243-9631-4d13-bffd-aee408dca705"
       }
     },
-    "description": "Life with Type 1, together. A community for people living with Type 1 diabetes, parents, caregivers, and supporters.",
+    "description": "Your T1D community within reach. A community for people living with Type 1 diabetes, parents, caregivers, and supporters.",
     "runtimeVersion": {
       "policy": "appVersion"
     }
