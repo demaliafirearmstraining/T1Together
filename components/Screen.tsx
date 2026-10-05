@@ -1,0 +1,12 @@
+import React from 'react';
+import {Text,Pressable,ScrollView,View,StyleSheet,ActivityIndicator} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {router} from 'expo-router';
+import {C} from '../lib/theme';
+export function Screen({title,children}:{title:string;children:React.ReactNode}){
+ return <SafeAreaView style={ui.safe}><ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled"><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={()=>router.canGoBack()?router.back():router.replace('/(tabs)/home')} style={ui.back}><Text style={ui.link}>‹ Back</Text></Pressable><Text accessibilityRole="header" style={ui.title}>{title}</Text>{children}</ScrollView></SafeAreaView>;
+}
+export function Action({label,onPress,busy=false,disabled=false,secondary=false}:{label:string;onPress:()=>void;busy?:boolean;disabled?:boolean;secondary?:boolean}){
+ return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{busy,disabled:disabled||busy}} disabled={disabled||busy} onPress={onPress} style={[ui.button,secondary&&ui.secondary,(disabled||busy)&&{opacity:.6}]}>{busy&&<ActivityIndicator color={secondary?C.blue:C.white}/>}<Text style={[ui.buttonText,secondary&&ui.link]}>{label}</Text></Pressable>;
+}
+export const ui=StyleSheet.create({safe:{flex:1,backgroundColor:C.white},page:{padding:20,paddingBottom:40},back:{minHeight:44,justifyContent:'center',alignSelf:'flex-start',paddingRight:20},title:{fontSize:28,fontWeight:'900',color:C.navy,marginTop:10,marginBottom:12},heading:{fontSize:19,fontWeight:'800',color:C.navy,marginBottom:6},text:{fontSize:16,lineHeight:24,color:C.gray},link:{fontSize:16,fontWeight:'800',color:C.blue},card:{backgroundColor:C.pale,borderWidth:1,borderColor:C.line,padding:18,borderRadius:18,marginTop:14},button:{minHeight:48,paddingVertical:12,paddingHorizontal:16,backgroundColor:C.blue,borderRadius:14,alignItems:'center',justifyContent:'center',flexDirection:'row',flexWrap:'wrap',gap:8,marginTop:12},secondary:{minHeight:44,backgroundColor:C.sky,borderWidth:1,borderColor:C.blue},buttonText:{flexShrink:1,fontSize:16,fontWeight:'800',color:C.white,textAlign:'center'},tag:{fontSize:14,fontWeight:'800',color:C.green,marginTop:6},error:{fontSize:16,lineHeight:24,color:C.red,marginVertical:10},row:{flexDirection:'row',alignItems:'center',flexWrap:'wrap',gap:12},input:{borderWidth:1,borderColor:C.line,borderRadius:12,padding:12,fontSize:16,color:C.navy,marginTop:10}});
