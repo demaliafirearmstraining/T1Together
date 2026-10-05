@@ -1,20 +1,21 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2'
 
+import {inQuietHours,extraPreference} from './preferences.ts';
 const MAX_ATTEMPTS=5;
 
 function preferenceColumn(kind:string){
  if(kind==='message')return 'notify_messages';
  if(kind==='beacon')return 'notify_beacon';
  if(kind==='help_response')return 'notify_help_responses';
- if(kind==='community_comment'||kind==='community_reply')return 'notify_community_comments';
+ if(kind==='community_comment')return 'notify_community_comments';
  if(kind==='community_support')return 'notify_community_support';
- if(kind==='help'||kind==='supply'||kind==='supply_match')return 'notify_nearby_help';
+ if(kind==='help')return 'notify_nearby_help';
  return null;
 }
 
 Deno.serve(async(req)=>{
  const secret=req.headers.get('authorization');
- if(secret!==`Bearer ${Deno.env.get('PUSH_DISPATCH_SECRET')}`)return new Response('Unauthorized',{status:401});
+ if(!Deno.env.get('PUSH_DISPATCH_SECRET')||secret!==`Bearer ${Deno.env.get('PUSH_DISPATCH_SECRET')}`)return new Response('Unauthorized',{status:401});
 
  const supabase=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
  const{data:jobs,error}=await supabase.from('push_outbox').select('*').is('sent_at',null).order('created_at').limit(100);
@@ -23,6 +24,13 @@ Deno.serve(async(req)=>{
  let sent=0,skipped=0,failed=0;
  for(const job of jobs||[]){
   try{
+   const{data:extra,error:preferenceError}=await supabase.from('member_alert_preferences').select('*').eq('user_id',job.user_id).maybeSingle();
+   if(preferenceError)throw preferenceError;
+   const extraColumn=extraPreference(job.kind);
+   if(extraColumn&&extra?.[extraColumn]===false){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'disabled_by_user'}).eq('id',job.id);skipped++;continue}
+   if(job.kind.startsWith('community_')&&job.entity_id){const{data:follow}=await supabase.from('post_follows').select('muted').eq('user_id',job.user_id).eq('post_id',job.entity_id).maybeSingle();if(follow?.muted){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'post_muted'}).eq('id',job.id);skipped++;continue}}
+   // Quiet hours silence push delivery; the notification remains in the app.
+   if(inQuietHours(extra)){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'quiet_hours'}).eq('id',job.id);skipped++;continue}
    const pref=preferenceColumn(job.kind);
    if(pref){
     const{data:profile}=await supabase.from('profiles').select(pref).eq('id',job.user_id).maybeSingle();
@@ -40,7 +48,8 @@ Deno.serve(async(req)=>{
     if(kind==='message')return {title:baseTitle||'New message',body:baseBody||'Someone sent you a message.',categoryId:'message',threadId:'messages'};
     if(kind==='community_comment')return {title:'New comment on your post',body:baseBody||'Someone commented on your post.',categoryId:'community',threadId:'community'};
     if(kind==='community_reply')return {title:baseTitle||'New reply to your comment',body:baseBody||'Someone replied to your comment.',categoryId:'community',threadId:'community'};
-    if(kind==='community_support')return {title:'Someone supported your post',body:baseBody||'Someone supported your post.',categoryId:'community',threadId:'community'};
+    if(kind==='community_follow')return {title:baseTitle||'New activity on a followed post',body:baseBody,categoryId:'community',threadId:'community'};
+    if(kind==='community_support')return {title:baseTitle||'Someone supported your post',body:baseBody||'Someone supported your post.',categoryId:'community',threadId:'community'};
     if(kind==='beacon')return {title:'T1 Beacon · Help nearby',body:baseBody||'A nearby T1DReach member needs time-sensitive help.',categoryId:'beacon',threadId:'help'};
     if(kind==='help_response')return {title:'Someone can help',body:baseBody||'A T1DReach member responded to your Help request.',categoryId:'help_response',threadId:'help'};
     if(kind==='help')return {title:baseTitle||'Help requested nearby',body:baseBody||'A nearby member posted a new Help request.',categoryId:'help',threadId:'help'};
@@ -49,7 +58,7 @@ Deno.serve(async(req)=>{
     return {title:baseTitle||'T1DReach',body:baseBody,categoryId:'default',threadId:'t1dreach'};
    };
    const copy=presentation(job.kind,job.title,job.body);
-   const messages=tokens.map(t=>({to:t.expo_push_token,sound:'default',title:copy.title,body:copy.body,data:{kind:job.kind,entity_id:job.entity_id,conversation_id:job.conversation_id,route:job.route},priority:job.kind==='beacon'?'high':'default',categoryId:copy.categoryId,threadId:copy.threadId,subtitle:job.kind==='beacon'?'T1DReach community':undefined}));
+   const messages=tokens.map(t=>({to:t.expo_push_token,sound:'default',title:copy.title,body:copy.body,data:{kind:job.kind,entity_id:job.entity_id,comment_id:job.comment_id,conversation_id:job.conversation_id,route:job.route},priority:job.kind==='beacon'?'high':'default',categoryId:copy.categoryId,threadId:copy.threadId,subtitle:job.kind==='beacon'?'T1DReach community':undefined}));
    const response=await fetch('https://exp.host/--/api/v2/push/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(messages)});
    const payload=await response.json().catch(()=>null);if(!response.ok)throw new Error(`Expo push HTTP ${response.status}`);
    const tickets=Array.isArray(payload?.data)?payload.data:[payload?.data].filter(Boolean);let accepted=0;

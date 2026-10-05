@@ -1,0 +1,84 @@
+-- Run after migration with execute_sql or psql. Fixtures and notifications roll back.
+begin;
+create temporary table upgrade_test_ids(a uuid,b uuid,c uuid,p uuid,root uuid,reply uuid,deep uuid,muted_reply uuid,quiet_reply uuid);
+insert into upgrade_test_ids values(gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),gen_random_uuid());
+insert into auth.users(id,email,raw_user_meta_data) select u,'upgrade-test-'||u||'@example.invalid','{"display_name":"Upgrade test","role":"caregiver"}'::jsonb from upgrade_test_ids cross join lateral unnest(array[a,b,c]) u;
+grant select on upgrade_test_ids to authenticated;
+select set_config('request.jwt.claim.sub',(select a::text from upgrade_test_ids),true);
+set local role authenticated;
+insert into public.posts(id,author_id,body) select p,a,'Transactional upgrade test' from upgrade_test_ids;
+insert into public.post_comments(id,post_id,author_id,body) select root,p,a,'Root comment' from upgrade_test_ids;
+reset role;
+select set_config('request.jwt.claim.sub',(select c::text from upgrade_test_ids),true);
+set local role authenticated;
+insert into public.post_follows(user_id,post_id) select c,p from upgrade_test_ids;
+insert into public.member_alert_preferences(user_id) select c from upgrade_test_ids;
+reset role;
+select set_config('request.jwt.claim.sub',(select b::text from upgrade_test_ids),true);
+set local role authenticated;
+insert into public.post_comments(id,post_id,author_id,parent_comment_id,body) select reply,p,b,root,'First reply' from upgrade_test_ids;
+reset role;
+select set_config('request.jwt.claim.sub',(select a::text from upgrade_test_ids),true);
+set local role authenticated;
+insert into public.post_comments(id,post_id,author_id,parent_comment_id,body) select deep,p,a,reply,'Reply to reply' from upgrade_test_ids;
+insert into public.comment_reactions(comment_id,user_id) select reply,a from upgrade_test_ids;
+update public.post_comments set body='Edited root' where id=(select root from upgrade_test_ids);
+reset role;
+do $$ begin
+ if (select count(*) from public.notifications where comment_id=(select deep from upgrade_test_ids))<>2 then raise exception 'Reply and follow recipient count failed';end if;
+ if not exists(select 1 from public.notifications n,upgrade_test_ids i where n.comment_id=i.deep and n.user_id=i.b and n.kind='community_reply') then raise exception 'Reply recipient missing';end if;
+ if not exists(select 1 from public.notifications n,upgrade_test_ids i where n.comment_id=i.deep and n.user_id=i.c and n.kind='community_follow') then raise exception 'Follow recipient missing';end if;
+ if not exists(select 1 from public.push_outbox o,upgrade_test_ids i where o.comment_id=i.deep) then raise exception 'Push comment target missing';end if;
+ if not exists(select 1 from public.post_comments c,upgrade_test_ids i where c.id=i.root and c.edited_at is not null) then raise exception 'Edited timestamp missing';end if;
+end $$;
+select set_config('request.jwt.claim.sub',(select b::text from upgrade_test_ids),true);
+set local role authenticated;
+insert into public.post_follows(user_id,post_id,muted) select b,p,true from upgrade_test_ids;
+do $$ declare n integer;begin
+ update public.post_comments set body='Unauthorized edit' where id=(select root from upgrade_test_ids);
+ get diagnostics n=row_count;if n<>0 then raise exception 'Unauthorized comment edit permitted';end if;
+ if exists(select 1 from public.member_alert_preferences where user_id=(select c from upgrade_test_ids)) then raise exception 'Other member alert preferences exposed';end if;
+ begin
+  insert into public.comment_reactions(comment_id,user_id) select root,a from upgrade_test_ids;
+  raise exception 'Other member reaction spoof permitted';
+ exception when insufficient_privilege then null;end;
+ begin
+  update public.post_comments set author_id=(select a from upgrade_test_ids) where id=(select reply from upgrade_test_ids);
+  raise exception 'Comment author reassignment permitted';
+ exception when raise_exception then if sqlerrm='Comment author reassignment permitted' then raise;end if;end;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',(select c::text from upgrade_test_ids),true);
+set local role authenticated;
+update public.member_alert_preferences set notify_followed_posts=false where user_id=(select c from upgrade_test_ids);
+reset role;
+select set_config('request.jwt.claim.sub',(select a::text from upgrade_test_ids),true);
+set local role authenticated;
+insert into public.post_comments(id,post_id,author_id,parent_comment_id,body) select muted_reply,p,a,reply,'Muted reply test' from upgrade_test_ids;
+reset role;
+do $$ begin
+ if exists(select 1 from public.notifications where comment_id=(select muted_reply from upgrade_test_ids)) then raise exception 'Muted or disabled recipient notified';end if;
+ if has_table_privilege('anon','public.member_alert_preferences','SELECT') or has_table_privilege('anon','public.post_follows','INSERT') then raise exception 'Anonymous grant leak';end if;
+end $$;
+select set_config('request.jwt.claim.sub',(select b::text from upgrade_test_ids),true);
+set local role authenticated;
+select public.set_my_approximate_location(42.0,-71.0);
+update public.profiles set nearby_enabled=false where id=(select b from upgrade_test_ids);
+reset role;
+select set_config('request.jwt.claim.sub',(select a::text from upgrade_test_ids),true);
+set local role authenticated;
+select public.set_my_approximate_location(42.0,-71.0);
+do $$ begin
+ if exists(select 1 from public.my_nearby_members(25) where member_id=(select b from upgrade_test_ids)) then raise exception 'Nearby toggle ignored';end if;
+ if exists(select 1 from public.search_nearby_public_members(25) where id=(select b from upgrade_test_ids)) then raise exception 'Nearby search toggle ignored';end if;
+end $$;
+insert into public.help_requests(id,requester_id,kind,item,radius_miles) select p,a,'T1D Question','Upgrade status test',0 from upgrade_test_ids;
+update public.help_requests set status='matched' where id=(select p from upgrade_test_ids);
+do $$ begin if not exists(select 1 from public.help_requests where id=(select p from upgrade_test_ids) and status='matched') then raise exception 'Help found state failed';end if;end $$;
+reset role;
+select set_config('request.jwt.claim.sub',(select b::text from upgrade_test_ids),true);
+set local role authenticated;
+do $$ declare n integer;begin update public.help_requests set status='closed' where id=(select p from upgrade_test_ids);get diagnostics n=row_count;if n<>0 then raise exception 'Other member status changed';end if;end $$;
+reset role;
+select 'all conversation, recipient, mute, edit, privacy, status and ownership checks passed' as result;
+rollback;
