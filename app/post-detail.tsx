@@ -1,3 +1,5 @@
+import{communityPhotoUrls}from'../lib/communityPhotoUrls';
+import{coalescedRefresh}from'../lib/coalescedRefresh';
 import React,{useCallback,useMemo,useState,useRef,useEffect}from'react';
 import{SafeAreaView,ScrollView,View,Text,TextInput,Pressable,StyleSheet,Alert,KeyboardAvoidingView,Platform,Image,Keyboard}from'react-native';
 import{useFocusEffect,useLocalSearchParams,router}from'expo-router';
@@ -21,16 +23,16 @@ export default function PostDetail(){
   if(p.error){setError(p.error.code==='PGRST116'?'This post is no longer available.':p.error.message);setPost(null);if(!silent)setLoading(false);return}
   setPost(p.data);
   if(p.data?.image_path){const{data}=await supabase.storage.from('community-posts').createSignedUrl(p.data.image_path,3600);setPhotoUrl(data?.signedUrl||null)}else setPhotoUrl(null);
-  if(!c.error){setComments(c.data||[]);const pairs=await Promise.all((c.data||[]).filter((x:any)=>x.image_path).map(async(x:any)=>{const {data}=await supabase.storage.from('community-posts').createSignedUrl(x.image_path,3600);return [x.id,data?.signedUrl]}));setCommentUrls(Object.fromEntries(pairs.filter(x=>x[1])));const ids=(c.data||[]).map((x:any)=>x.id);if(ids.length){const {data}=await supabase.from('comment_reactions').select('comment_id,user_id').in('comment_id',ids);setCommentSupport(data||[])}else setCommentSupport([]);}
+  if(!c.error){setComments(c.data||[]);setCommentUrls(await communityPhotoUrls(c.data||[]));const ids=(c.data||[]).map((x:any)=>x.id);if(ids.length){const {data}=await supabase.from('comment_reactions').select('comment_id,user_id').in('comment_id',ids);setCommentSupport(data||[])}else setCommentSupport([]);}
   if(r.data){setCount(r.data.length);setSupported(r.data.some((x:any)=>x.user_id===session?.user.id))}
   if(session){const{data:f}=await supabase.from('post_follows').select('*').eq('user_id',session.user.id).eq('post_id',id).maybeSingle();setFollow(f);const{data:b}=await supabase.from('post_bookmarks').select('post_id').eq('user_id',session.user.id).eq('post_id',id).maybeSingle();setSaved(!!b)}
   if(!silent)setLoading(false);
  },[id,session?.user.id]);
 
- useFocusEffect(useCallback(()=>{load();if(!id)return;
-  const commentsChannel=supabase.channel('post-comments-'+id).on('postgres_changes',{event:'*',schema:'public',table:'post_comments',filter:`post_id=eq.${id}`},()=>load(true)).subscribe();
-  const reactionsChannel=supabase.channel('post-reactions-'+id).on('postgres_changes',{event:'*',schema:'public',table:'post_reactions',filter:`post_id=eq.${id}`},()=>load(true)).subscribe();
-  const postChannel=supabase.channel('post-state-'+id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'posts',filter:`id=eq.${id}`},()=>load(true)).subscribe();const supportChannel=supabase.channel('comment-support-'+id).on('postgres_changes',{event:'*',schema:'public',table:'comment_reactions'},()=>load(true)).subscribe();return()=>{supabase.removeChannel(commentsChannel);supabase.removeChannel(reactionsChannel);supabase.removeChannel(supportChannel);supabase.removeChannel(postChannel)}
+ useFocusEffect(useCallback(()=>{load();if(!id)return;const updates=coalescedRefresh(()=>load(true));
+  const commentsChannel=supabase.channel('post-comments-'+id).on('postgres_changes',{event:'*',schema:'public',table:'post_comments',filter:`post_id=eq.${id}`},updates.request).subscribe();
+  const reactionsChannel=supabase.channel('post-reactions-'+id).on('postgres_changes',{event:'*',schema:'public',table:'post_reactions',filter:`post_id=eq.${id}`},updates.request).subscribe();
+  const postChannel=supabase.channel('post-state-'+id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'posts',filter:`id=eq.${id}`},updates.request).subscribe();const supportChannel=supabase.channel('comment-support-'+id).on('postgres_changes',{event:'*',schema:'public',table:'comment_reactions'},updates.request).subscribe();return()=>{updates.dispose();supabase.removeChannel(commentsChannel);supabase.removeChannel(reactionsChannel);supabase.removeChannel(supportChannel);supabase.removeChannel(postChannel)}
  },[id,load]));
 
  async function toggle(){if(!session||!id||actionBusy)return;setActionBusy(true);const next=!supported;setSupported(next);setCount(v=>Math.max(0,v+(next?1:-1)));
