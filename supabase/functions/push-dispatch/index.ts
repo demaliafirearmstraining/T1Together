@@ -1,6 +1,7 @@
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2'
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.116.0'
 
 import {inQuietHours,extraPreference} from './preferences.ts';
+import {postExpo} from './transport.ts';
 const MAX_ATTEMPTS=5;
 
 function preferenceColumn(kind:string){
@@ -28,19 +29,22 @@ Deno.serve(async(req)=>{
    if(preferenceError)throw preferenceError;
    const extraColumn=extraPreference(job.kind);
    if(extraColumn&&extra?.[extraColumn]===false){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'disabled_by_user'}).eq('id',job.id);skipped++;continue}
-   if(job.kind.startsWith('community_')&&job.entity_id){const{data:follow}=await supabase.from('post_follows').select('muted').eq('user_id',job.user_id).eq('post_id',job.entity_id).maybeSingle();if(follow?.muted){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'post_muted'}).eq('id',job.id);skipped++;continue}}
+   if(job.kind.startsWith('community_')&&job.entity_id){const{data:follow,error:followError}=await supabase.from('post_follows').select('muted').eq('user_id',job.user_id).eq('post_id',job.entity_id).maybeSingle();if(followError)throw followError;if(follow?.muted){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'post_muted'}).eq('id',job.id);skipped++;continue}}
    // Quiet hours silence push delivery; the notification remains in the app.
    if(inQuietHours(extra)){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'quiet_hours'}).eq('id',job.id);skipped++;continue}
    const pref=preferenceColumn(job.kind);
    if(pref){
-    const{data:profile}=await supabase.from('profiles').select(pref).eq('id',job.user_id).maybeSingle();
-    if(profile&&profile[pref]===false){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'disabled_by_user'}).eq('id',job.id);skipped++;continue}
+    const{data:profile,error:profileError}=await supabase.from('profiles').select(pref).eq('id',job.user_id).maybeSingle();
+    if(profileError)throw profileError;
+    if(profile&&(profile as Record<string,unknown>)[pref]===false){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'disabled_by_user'}).eq('id',job.id);skipped++;continue}
    }
    if((job.kind==='help'||job.kind==='beacon')&&job.entity_id){
-    const{data:reqRow}=await supabase.from('help_requests').select('status,expires_at').eq('id',job.entity_id).maybeSingle();
+    const{data:reqRow,error:requestError}=await supabase.from('help_requests').select('status,expires_at').eq('id',job.entity_id).maybeSingle();
+    if(requestError)throw requestError;
     if(!reqRow||reqRow.status!=='open'||(reqRow.expires_at&&new Date(reqRow.expires_at).getTime()<=Date.now())){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'request_inactive'}).eq('id',job.id);skipped++;continue}
    }
-   const{data:tokens}=await supabase.from('push_tokens').select('id,expo_push_token').eq('user_id',job.user_id).eq('enabled',true);
+   const{data:tokens,error:tokenError}=await supabase.from('push_tokens').select('id,expo_push_token').eq('user_id',job.user_id).eq('enabled',true);
+   if(tokenError)throw tokenError;
    if(!tokens?.length){await supabase.from('push_outbox').update({sent_at:new Date().toISOString(),last_error:'no_enabled_tokens'}).eq('id',job.id);skipped++;continue}
    const presentation=(kind:string,title:string,body:string)=>{
     const clean=(v:any)=>String(v||'').replace(/\s+/g,' ').trim().replace(/T1Together/g,'T1DReach');
@@ -59,7 +63,7 @@ Deno.serve(async(req)=>{
    };
    const copy=presentation(job.kind,job.title,job.body);
    const messages=tokens.map(t=>({to:t.expo_push_token,sound:'default',title:copy.title,body:copy.body,data:{kind:job.kind,entity_id:job.entity_id,comment_id:job.comment_id,conversation_id:job.conversation_id,route:job.route},priority:job.kind==='beacon'?'high':'default',categoryId:copy.categoryId,threadId:copy.threadId,subtitle:job.kind==='beacon'?'T1DReach community':undefined}));
-   const response=await fetch('https://exp.host/--/api/v2/push/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(messages)});
+   const response=await postExpo(messages);
    const payload=await response.json().catch(()=>null);if(!response.ok)throw new Error(`Expo push HTTP ${response.status}`);
    const tickets=Array.isArray(payload?.data)?payload.data:[payload?.data].filter(Boolean);let accepted=0;
    for(let i=0;i<tickets.length;i++){const ticket=tickets[i];if(ticket?.status==='ok'){accepted++;continue}const expoError=ticket?.details?.error;if(expoError==='DeviceNotRegistered'&&tokens[i]?.id)await supabase.from('push_tokens').update({enabled:false,updated_at:new Date().toISOString()}).eq('id',tokens[i].id)}
