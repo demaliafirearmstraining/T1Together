@@ -1,3 +1,4 @@
+import{communityPhotoUrls}from'../../lib/communityPhotoUrls';
 import React,{useCallback,useState}from'react';
 import{SafeAreaView,ScrollView,View,Text,Pressable,StyleSheet,RefreshControl,Image}from'react-native';
 import{useFocusEffect,router}from'expo-router';
@@ -16,7 +17,7 @@ export default function Home(){
   supabase.from('profiles').select('display_name,city,region,helper_enabled,avatar_url,role').eq('id',session.user.id).single(),
   supabase.from('posts').select('id,body,category,created_at,image_path,profiles!posts_author_id_fkey(display_name,city,region,avatar_url)').order('created_at',{ascending:false}).limit(2),
   supabase.rpc('my_unread_notification_count'),supabase.rpc('my_unread_conversations'),supabase.rpc('my_nearby_members',{max_miles:25}),supabase.rpc('nearby_supply_posts',{max_miles:25}),supabase.rpc('community_post_stats')
- ]);if(p.data)setProfile(p.data);if(feed.data){setPosts(feed.data as Post[]);const pairs=await Promise.all((feed.data||[]).filter((x:any)=>x.image_path).map(async(x:any)=>{const{data}=await supabase.storage.from('community-posts').createSignedUrl(x.image_path,3600);return[x.id,data?.signedUrl]}));setPhotoUrls(Object.fromEntries(pairs.filter((x:any)=>x[1])))}setUnread(Number(n.data||0));setUnreadMessages((msg.data||[]).reduce((sum:number,x:any)=>sum+Number(x.unread_count||0),0));setNearby((near.data||[]).slice(0,3));setSupplies((supply.data||[]).slice(0,2));const sm:Record<string,any>={};(postStats.data||[]).forEach((x:any)=>sm[x.post_id]=x);setStats(sm)},[session]);
+ ]);if(p.data)setProfile(p.data);if(feed.data){setPosts(feed.data as Post[]);setPhotoUrls(await communityPhotoUrls(feed.data))}setUnread(Number(n.data||0));setUnreadMessages((msg.data||[]).reduce((sum:number,x:any)=>sum+Number(x.unread_count||0),0));setNearby((near.data||[]).slice(0,3));setSupplies((supply.data||[]).slice(0,2));const sm:Record<string,any>={};(postStats.data||[]).forEach((x:any)=>sm[x.post_id]=x);setStats(sm)},[session]);
  useFocusEffect(useCallback(()=>{load()},[load]));async function refresh(){setRefreshing(true);await load();setRefreshing(false)}
  const first=profile?.display_name?.split(' ')[0]||'there';const location=profile?.city?[profile.city,profile.region].filter(Boolean).join(', '):'Your T1D community';
  return <SafeAreaView style={s.safe}><ScrollView style={s.scroll} contentContainerStyle={s.page} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh}/>}>

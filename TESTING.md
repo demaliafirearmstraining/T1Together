@@ -1,6 +1,13 @@
 # T1DReach V1 test pass
 
-Run `supabase/migrations/002_feature_expansion.sql` in the Supabase SQL Editor before this test pass.
+Use a provisioned disposable backend for smoke tests. Historical migrations were
+applied manually; do not replay them against production or run a blanket database
+push. In particular, migration 041 deletes community activity. The existing
+development EAS environment points at production, so confirm backend isolation
+before creating load-test data or testing deletion.
+
+For next-update validation and the automated checks, see
+[next-update-readiness.md](docs/next-update-readiness.md).
 
 ## Smoke test order
 1. Sign in and confirm an existing completed profile opens Home rather than Onboarding.
