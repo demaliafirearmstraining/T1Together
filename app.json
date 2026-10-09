@@ -9,7 +9,7 @@
     "userInterfaceStyle": "light",
     "plugins": [
       "expo-router",
-      "expo-notifications"
+      ["expo-notifications", {"defaultChannel": "t1dreach-alerts"}]
     ],
     "ios": {
       "supportsTablet": false,

@@ -1,5 +1,5 @@
 import React,{useState}from'react';
-import{SafeAreaView,View,Text,Pressable,StyleSheet,Alert,ActivityIndicator,ScrollView}from'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';import{View,Text,Pressable,StyleSheet,Alert,ActivityIndicator,ScrollView}from'react-native';
 import{router}from'expo-router';
 import{Ionicons}from'@expo/vector-icons';
 import{supabase}from'../lib/supabase';

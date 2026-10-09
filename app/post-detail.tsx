@@ -1,5 +1,5 @@
 import React,{useCallback,useMemo,useState,useRef,useEffect}from'react';
-import{SafeAreaView,ScrollView,View,Text,TextInput,Pressable,StyleSheet,Alert,KeyboardAvoidingView,Platform,Image,Keyboard}from'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';import{ScrollView,View,Text,TextInput,Pressable,StyleSheet,Alert,KeyboardAvoidingView,Platform,Image,Keyboard}from'react-native';
 import{useFocusEffect,useLocalSearchParams,router}from'expo-router';
 import{Ionicons}from'@expo/vector-icons';
 import{supabase}from'../lib/supabase';

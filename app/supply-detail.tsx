@@ -1,5 +1,5 @@
 import React,{useCallback,useState}from'react';
-import{SafeAreaView,ScrollView,View,Text,Pressable,StyleSheet,Image,Alert,ActivityIndicator}from'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';import{ScrollView,View,Text,Pressable,StyleSheet,Image,Alert,ActivityIndicator}from'react-native';
 import{useFocusEffect,useLocalSearchParams,router}from'expo-router';
 import{Ionicons}from'@expo/vector-icons';
 import{supabase}from'../lib/supabase';

@@ -1,4 +1,4 @@
-import React,{useEffect,useState}from'react';import{SafeAreaView,View,Text,ActivityIndicator,StyleSheet,Pressable}from'react-native';import * as Linking from'expo-linking';import{router}from'expo-router';import{consumeAuthUrl}from'../../lib/authLinks';import{C}from'../../lib/theme';
+import React,{useEffect,useState}from'react';import {SafeAreaView} from 'react-native-safe-area-context';import{View,Text,ActivityIndicator,StyleSheet,Pressable}from'react-native';import * as Linking from'expo-linking';import{router}from'expo-router';import{consumeAuthUrl}from'../../lib/authLinks';import{C}from'../../lib/theme';
 
 export default function AuthCallback(){
  const url=Linking.useURL();const[error,setError]=useState('');

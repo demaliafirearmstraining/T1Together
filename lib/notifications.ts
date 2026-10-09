@@ -5,20 +5,20 @@ import {supabase} from './supabase';
 
 Notifications.setNotificationHandler({handleNotification:async()=>({shouldShowBanner:true,shouldShowList:true,shouldPlaySound:true,shouldSetBadge:true})});
 
-export async function registerPush(userId:string){
+export async function registerPush(userId:string,requestPermission=true){
+ try{
  if(Platform.OS==='android'){
-  await Notifications.setNotificationChannelAsync('default',{name:'T1DReach',description:'General T1DReach notifications',importance:Notifications.AndroidImportance.DEFAULT,vibrationPattern:[0,180]});
+  await Notifications.setNotificationChannelAsync('t1dreach-alerts',{name:'T1DReach',description:'General T1DReach notifications',sound:'default',importance:Notifications.AndroidImportance.HIGH,vibrationPattern:[0,180]});
   await Notifications.setNotificationChannelAsync('messages',{name:'Messages',description:'Private T1DReach messages',importance:Notifications.AndroidImportance.HIGH,vibrationPattern:[0,120,80,120]});
   await Notifications.setNotificationChannelAsync('community',{name:'Community & Help',description:'Community, Help and Supply Locker updates',importance:Notifications.AndroidImportance.HIGH,vibrationPattern:[0,180,100,180]});
   await Notifications.setNotificationChannelAsync('beacon',{name:'T1 Beacon',description:'Time-sensitive T1 Beacon alerts',importance:Notifications.AndroidImportance.MAX,vibrationPattern:[0,300,120,300,120,300]});
  }
  const current=await Notifications.getPermissionsAsync();
  let status=current.status;
- if(status!=='granted')status=(await Notifications.requestPermissionsAsync()).status;
+ if(status!=='granted'&&requestPermission)status=(await Notifications.requestPermissionsAsync()).status;
  if(status!=='granted')return {ok:false,reason:'permission'};
  const projectId=Constants.expoConfig?.extra?.eas?.projectId??Constants.easConfig?.projectId;
  if(!projectId)return {ok:false,reason:'project'};
- try{
   const token=(await Notifications.getExpoPushTokenAsync({projectId})).data;
   const{error}=await supabase.from('push_tokens').upsert({user_id:userId,expo_push_token:token,platform:Platform.OS,enabled:true,updated_at:new Date().toISOString()},{onConflict:'expo_push_token'});
   return {ok:!error,reason:error?.message,token};

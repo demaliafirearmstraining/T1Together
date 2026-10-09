@@ -1,10 +1,10 @@
 import React from 'react';
-import {Text,Pressable,ScrollView,View,StyleSheet,ActivityIndicator} from 'react-native';
+import {Text,Pressable,ScrollView,View,StyleSheet,ActivityIndicator,KeyboardAvoidingView,Platform} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {router} from 'expo-router';
 import {C} from '../lib/theme';
 export function Screen({title,children}:{title:string;children:React.ReactNode}){
- return <SafeAreaView style={ui.safe}><ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled"><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={()=>router.canGoBack()?router.back():router.replace('/(tabs)/home')} style={ui.back}><Text style={ui.link}>‹ Back</Text></Pressable><Text accessibilityRole="header" style={ui.title}>{title}</Text>{children}</ScrollView></SafeAreaView>;
+ return <SafeAreaView style={ui.safe}><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':'height'}><ScrollView contentContainerStyle={ui.page} keyboardShouldPersistTaps="handled"><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={()=>router.canGoBack()?router.back():router.replace('/(tabs)/home')} style={ui.back}><Text style={ui.link}>‹ Back</Text></Pressable><Text accessibilityRole="header" style={ui.title}>{title}</Text>{children}</ScrollView></KeyboardAvoidingView></SafeAreaView>;
 }
 export function Action({label,onPress,busy=false,disabled=false,secondary=false}:{label:string;onPress:()=>void;busy?:boolean;disabled?:boolean;secondary?:boolean}){
  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{busy,disabled:disabled||busy}} disabled={disabled||busy} onPress={onPress} style={[ui.button,secondary&&ui.secondary,(disabled||busy)&&{opacity:.6}]}>{busy&&<ActivityIndicator color={secondary?C.blue:C.white}/>}<Text style={[ui.buttonText,secondary&&ui.link]}>{label}</Text></Pressable>;
